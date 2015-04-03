@@ -2770,7 +2770,7 @@ __LJMP static int hlua_run_sample_fetch(lua_State *L)
 	memset(&smp, 0, sizeof(smp));
 
 	/* Run the sample fetch process. */
-	if (!f->process(s->p, s->s, s->l7, 0, args, &smp, f->kw, f->private)) {
+	if (!f->process(s->p, s->s, 0, args, &smp, f->kw, f->private)) {
 		if (s->stringsafe)
 			lua_pushstring(L, "");
 		else
@@ -3324,7 +3324,7 @@ __LJMP static int hlua_get_priv(lua_State *L)
  * return 0 if the stack does not contains free slots,
  * otherwise it returns 1.
  */
-static int hlua_txn_new(lua_State *L, struct stream *s, struct proxy *p, void *l7)
+static int hlua_txn_new(lua_State *L, struct stream *s, struct proxy *p)
 {
 	struct hlua_txn *hs;
 
@@ -3343,7 +3343,7 @@ static int hlua_txn_new(lua_State *L, struct stream *s, struct proxy *p, void *l
 
 	hs->s = s;
 	hs->p = p;
-	hs->l7 = l7;
+	hs->l7 = s->txn;
 
 	/* Create the "f" field that contains a list of fetches. */
 	lua_pushstring(L, "f");
@@ -3915,7 +3915,7 @@ static int hlua_sample_conv_wrapper(struct stream *stream, const struct arg *arg
  * doesn't allow "yield" functions because the HAProxy engine cannot
  * resume sample-fetches.
  */
-static int hlua_sample_fetch_wrapper(struct proxy *px, struct stream *s, void *l7,
+static int hlua_sample_fetch_wrapper(struct proxy *px, struct stream *s,
                                      unsigned int opt, const struct arg *arg_p,
                                      struct sample *smp, const char *kw, void *private)
 {
@@ -3947,7 +3947,7 @@ static int hlua_sample_fetch_wrapper(struct proxy *px, struct stream *s, void *l
 		lua_rawgeti(s->hlua.T, LUA_REGISTRYINDEX, fcn->function_ref);
 
 		/* push arguments in the stack. */
-		if (!hlua_txn_new(s->hlua.T, s, px, l7)) {
+		if (!hlua_txn_new(s->hlua.T, s, px)) {
 			send_log(px, LOG_ERR, "Lua sample-fetch '%s': full stack.", fcn->name);
 			if (!(global.mode & MODE_QUIET) || (global.mode & MODE_VERBOSE))
 				Alert("Lua sample-fetch '%s': full stack.\n", fcn->name);
@@ -4229,7 +4229,7 @@ static int hlua_request_act_wrapper(struct hlua_rule *rule, struct proxy *px,
 		lua_rawgeti(s->hlua.T, LUA_REGISTRYINDEX, rule->fcn.function_ref);
 
 		/* Create and and push object stream in the stack. */
-		if (!hlua_txn_new(s->hlua.T, s, px, http_txn)) {
+		if (!hlua_txn_new(s->hlua.T, s, px)) {
 			send_log(px, LOG_ERR, "Lua function '%s': full stack.", rule->fcn.name);
 			if (!(global.mode & MODE_QUIET) || (global.mode & MODE_VERBOSE))
 				Alert("Lua function '%s': full stack.\n", rule->fcn.name);

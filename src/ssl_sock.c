@@ -3084,11 +3084,11 @@ unsigned int ssl_sock_get_verify_result(struct connection *conn)
 
 /* boolean, returns true if client cert was present */
 static int
-smp_fetch_ssl_fc_has_crt(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
+smp_fetch_ssl_fc_has_crt(struct proxy *px, struct stream *strm, unsigned int opt,
                          const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
 	struct connection *conn;
-	struct session *sess = l4->sess;
+	struct session *sess = strm_sess(strm);
 
 	conn = objt_conn(sess->origin);
 	if (!conn || conn->xprt != &ssl_sock)
@@ -3111,14 +3111,14 @@ smp_fetch_ssl_fc_has_crt(struct proxy *px, struct stream *l4, void *l7, unsigned
  * should be use.
  */
 static int
-smp_fetch_ssl_x_der(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
+smp_fetch_ssl_x_der(struct proxy *px, struct stream *strm, unsigned int opt,
                     const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
 	int cert_peer = (kw[4] == 'c') ? 1 : 0;
 	X509 *crt = NULL;
 	int ret = 0;
 	struct chunk *smp_trash;
-	struct session *sess = strm_sess(l4);
+	struct session *sess = strm_sess(strm);
 	struct connection *conn;
 
 	conn = objt_conn(sess->origin);
@@ -3157,14 +3157,14 @@ out:
  * should be use.
  */
 static int
-smp_fetch_ssl_x_serial(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
+smp_fetch_ssl_x_serial(struct proxy *px, struct stream *strm, unsigned int opt,
                        const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
 	int cert_peer = (kw[4] == 'c') ? 1 : 0;
 	X509 *crt = NULL;
 	int ret = 0;
 	struct chunk *smp_trash;
-	struct session *sess = strm_sess(l4);
+	struct session *sess = strm_sess(strm);
 	struct connection *conn;
 
 	conn = objt_conn(sess->origin);
@@ -3203,7 +3203,7 @@ out:
  * should be use.
  */
 static int
-smp_fetch_ssl_x_sha1(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
+smp_fetch_ssl_x_sha1(struct proxy *px, struct stream *strm, unsigned int opt,
                      const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
 	int cert_peer = (kw[4] == 'c') ? 1 : 0;
@@ -3211,7 +3211,7 @@ smp_fetch_ssl_x_sha1(struct proxy *px, struct stream *l4, void *l7, unsigned int
 	const EVP_MD *digest;
 	int ret = 0;
 	struct chunk *smp_trash;
-	struct session *sess = strm_sess(l4);
+	struct session *sess = strm_sess(strm);
 	struct connection *conn;
 
 	conn = objt_conn(sess->origin);
@@ -3249,14 +3249,14 @@ out:
  * should be use.
  */
 static int
-smp_fetch_ssl_x_notafter(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
-                       const struct arg *args, struct sample *smp, const char *kw, void *private)
+smp_fetch_ssl_x_notafter(struct proxy *px, struct stream *strm, unsigned int opt,
+                         const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
 	int cert_peer = (kw[4] == 'c') ? 1 : 0;
 	X509 *crt = NULL;
 	int ret = 0;
 	struct chunk *smp_trash;
-	struct session *sess = strm_sess(l4);
+	struct session *sess = strm_sess(strm);
 	struct connection *conn;
 
 	conn = objt_conn(sess->origin);
@@ -3294,15 +3294,15 @@ out:
  * should be use.
  */
 static int
-smp_fetch_ssl_x_i_dn(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
-                       const struct arg *args, struct sample *smp, const char *kw, void *private)
+smp_fetch_ssl_x_i_dn(struct proxy *px, struct stream *strm, unsigned int opt,
+                     const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
 	int cert_peer = (kw[4] == 'c') ? 1 : 0;
 	X509 *crt = NULL;
 	X509_NAME *name;
 	int ret = 0;
 	struct chunk *smp_trash;
-	struct session *sess = strm_sess(l4);
+	struct session *sess = strm_sess(strm);
 	struct connection *conn;
 
 	conn = objt_conn(sess->origin);
@@ -3355,14 +3355,14 @@ out:
  * should be use.
  */
 static int
-smp_fetch_ssl_x_notbefore(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
-                       const struct arg *args, struct sample *smp, const char *kw, void *private)
+smp_fetch_ssl_x_notbefore(struct proxy *px, struct stream *strm, unsigned int opt,
+                          const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
 	int cert_peer = (kw[4] == 'c') ? 1 : 0;
 	X509 *crt = NULL;
 	int ret = 0;
 	struct chunk *smp_trash;
-	struct session *sess = strm_sess(l4);
+	struct session *sess = strm_sess(strm);
 	struct connection *conn;
 
 	conn = objt_conn(sess->origin);
@@ -3400,15 +3400,15 @@ out:
  * should be use.
  */
 static int
-smp_fetch_ssl_x_s_dn(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
-                       const struct arg *args, struct sample *smp, const char *kw, void *private)
+smp_fetch_ssl_x_s_dn(struct proxy *px, struct stream *strm, unsigned int opt,
+                     const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
 	int cert_peer = (kw[4] == 'c') ? 1 : 0;
 	X509 *crt = NULL;
 	X509_NAME *name;
 	int ret = 0;
 	struct chunk *smp_trash;
-	struct session *sess = strm_sess(l4);
+	struct session *sess = strm_sess(strm);
 	struct connection *conn;
 
 	conn = objt_conn(sess->origin);
@@ -3458,11 +3458,11 @@ out:
 
 /* integer, returns true if current session use a client certificate */
 static int
-smp_fetch_ssl_c_used(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
-                        const struct arg *args, struct sample *smp, const char *kw, void *private)
+smp_fetch_ssl_c_used(struct proxy *px, struct stream *strm, unsigned int opt,
+                     const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
 	X509 *crt;
-	struct session *sess = strm_sess(l4);
+	struct session *sess = strm_sess(strm);
 	struct connection *conn;
 
 	conn = objt_conn(sess->origin);
@@ -3490,12 +3490,12 @@ smp_fetch_ssl_c_used(struct proxy *px, struct stream *l4, void *l7, unsigned int
  * should be use.
  */
 static int
-smp_fetch_ssl_x_version(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
+smp_fetch_ssl_x_version(struct proxy *px, struct stream *strm, unsigned int opt,
                         const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
 	int cert_peer = (kw[4] == 'c') ? 1 : 0;
 	X509 *crt;
-	struct session *sess = strm_sess(l4);
+	struct session *sess = strm_sess(strm);
 	struct connection *conn;
 
 	conn = objt_conn(sess->origin);
@@ -3528,13 +3528,13 @@ smp_fetch_ssl_x_version(struct proxy *px, struct stream *l4, void *l7, unsigned 
  * should be use.
  */
 static int
-smp_fetch_ssl_x_sig_alg(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
+smp_fetch_ssl_x_sig_alg(struct proxy *px, struct stream *strm, unsigned int opt,
                         const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
 	int cert_peer = (kw[4] == 'c') ? 1 : 0;
 	X509 *crt;
 	int nid;
-	struct session *sess = strm_sess(l4);
+	struct session *sess = strm_sess(strm);
 	struct connection *conn;
 
 	conn = objt_conn(sess->origin);
@@ -3578,13 +3578,13 @@ smp_fetch_ssl_x_sig_alg(struct proxy *px, struct stream *l4, void *l7, unsigned 
  * should be use.
  */
 static int
-smp_fetch_ssl_x_key_alg(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
+smp_fetch_ssl_x_key_alg(struct proxy *px, struct stream *strm, unsigned int opt,
                         const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
 	int cert_peer = (kw[4] == 'c') ? 1 : 0;
 	X509 *crt;
 	int nid;
-	struct session *sess = strm_sess(l4);
+	struct session *sess = strm_sess(strm);
 	struct connection *conn;
 
 	conn = objt_conn(sess->origin);
@@ -3627,11 +3627,11 @@ smp_fetch_ssl_x_key_alg(struct proxy *px, struct stream *l4, void *l7, unsigned 
  * char is 'b'.
  */
 static int
-smp_fetch_ssl_fc(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
+smp_fetch_ssl_fc(struct proxy *px, struct stream *strm, unsigned int opt,
                  const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
 	int back_conn = (kw[4] == 'b') ? 1 : 0;
-	struct connection *conn = objt_conn(l4->si[back_conn].end);
+	struct connection *conn = objt_conn(strm->si[back_conn].end);
 
 	smp->type = SMP_T_BOOL;
 	smp->data.uint = (conn && conn->xprt == &ssl_sock);
@@ -3640,7 +3640,7 @@ smp_fetch_ssl_fc(struct proxy *px, struct stream *l4, void *l7, unsigned int opt
 
 /* boolean, returns true if client present a SNI */
 static int
-smp_fetch_ssl_fc_has_sni(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
+smp_fetch_ssl_fc_has_sni(struct proxy *px, struct stream *strm, unsigned int opt,
                          const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
 #ifdef SSL_CTRL_SET_TLSEXT_HOSTNAME
@@ -3661,7 +3661,7 @@ smp_fetch_ssl_fc_has_sni(struct proxy *px, struct stream *l4, void *l7, unsigned
  * char is 'b'.
  */
 static int
-smp_fetch_ssl_fc_cipher(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
+smp_fetch_ssl_fc_cipher(struct proxy *px, struct stream *strm, unsigned int opt,
                         const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
 	int back_conn = (kw[4] == 'b') ? 1 : 0;
@@ -3669,7 +3669,7 @@ smp_fetch_ssl_fc_cipher(struct proxy *px, struct stream *l4, void *l7, unsigned 
 
 	smp->flags = 0;
 
-	conn = objt_conn(l4->si[back_conn].end);
+	conn = objt_conn(strm->si[back_conn].end);
 	if (!conn || !conn->xprt_ctx || conn->xprt != &ssl_sock)
 		return 0;
 
@@ -3690,7 +3690,7 @@ smp_fetch_ssl_fc_cipher(struct proxy *px, struct stream *l4, void *l7, unsigned 
  * char is 'b'.
  */
 static int
-smp_fetch_ssl_fc_alg_keysize(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
+smp_fetch_ssl_fc_alg_keysize(struct proxy *px, struct stream *strm, unsigned int opt,
                              const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
 	int back_conn = (kw[4] == 'b') ? 1 : 0;
@@ -3698,7 +3698,7 @@ smp_fetch_ssl_fc_alg_keysize(struct proxy *px, struct stream *l4, void *l7, unsi
 
 	smp->flags = 0;
 
-	conn = objt_conn(l4->si[back_conn].end);
+	conn = objt_conn(strm->si[back_conn].end);
 	if (!conn || !conn->xprt_ctx || conn->xprt != &ssl_sock)
 		return 0;
 
@@ -3715,7 +3715,7 @@ smp_fetch_ssl_fc_alg_keysize(struct proxy *px, struct stream *l4, void *l7, unsi
  * char is 'b'.
  */
 static int
-smp_fetch_ssl_fc_use_keysize(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
+smp_fetch_ssl_fc_use_keysize(struct proxy *px, struct stream *strm, unsigned int opt,
                              const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
 	int back_conn = (kw[4] == 'b') ? 1 : 0;
@@ -3723,7 +3723,7 @@ smp_fetch_ssl_fc_use_keysize(struct proxy *px, struct stream *l4, void *l7, unsi
 
 	smp->flags = 0;
 
-	conn = objt_conn(l4->si[back_conn].end);
+	conn = objt_conn(strm->si[back_conn].end);
 	if (!conn || !conn->xprt_ctx || conn->xprt != &ssl_sock)
 		return 0;
 
@@ -3738,7 +3738,7 @@ smp_fetch_ssl_fc_use_keysize(struct proxy *px, struct stream *l4, void *l7, unsi
 
 #ifdef OPENSSL_NPN_NEGOTIATED
 static int
-smp_fetch_ssl_fc_npn(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
+smp_fetch_ssl_fc_npn(struct proxy *px, struct stream *strm, unsigned int opt,
                      const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
 	struct connection *conn;
@@ -3763,7 +3763,7 @@ smp_fetch_ssl_fc_npn(struct proxy *px, struct stream *l4, void *l7, unsigned int
 
 #ifdef TLSEXT_TYPE_application_layer_protocol_negotiation
 static int
-smp_fetch_ssl_fc_alpn(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
+smp_fetch_ssl_fc_alpn(struct proxy *px, struct stream *strm, unsigned int opt,
                       const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
 	struct connection *conn;
@@ -3791,7 +3791,7 @@ smp_fetch_ssl_fc_alpn(struct proxy *px, struct stream *l4, void *l7, unsigned in
  * char is 'b'.
  */
 static int
-smp_fetch_ssl_fc_protocol(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
+smp_fetch_ssl_fc_protocol(struct proxy *px, struct stream *strm, unsigned int opt,
                           const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
 	int back_conn = (kw[4] == 'b') ? 1 : 0;
@@ -3799,7 +3799,7 @@ smp_fetch_ssl_fc_protocol(struct proxy *px, struct stream *l4, void *l7, unsigne
 
 	smp->flags = 0;
 
-	conn = objt_conn(l4->si[back_conn].end);
+	conn = objt_conn(strm->si[back_conn].end);
 	if (!conn || !conn->xprt_ctx || conn->xprt != &ssl_sock)
 		return 0;
 
@@ -3819,7 +3819,7 @@ smp_fetch_ssl_fc_protocol(struct proxy *px, struct stream *l4, void *l7, unsigne
  * char is 'b'.
  */
 static int
-smp_fetch_ssl_fc_session_id(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
+smp_fetch_ssl_fc_session_id(struct proxy *px, struct stream *strm, unsigned int opt,
                             const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
 #if OPENSSL_VERSION_NUMBER > 0x0090800fL
@@ -3830,7 +3830,7 @@ smp_fetch_ssl_fc_session_id(struct proxy *px, struct stream *l4, void *l7, unsig
 	smp->flags = SMP_F_CONST;
 	smp->type = SMP_T_BIN;
 
-	conn = objt_conn(l4->si[back_conn].end);
+	conn = objt_conn(strm->si[back_conn].end);
 	if (!conn || !conn->xprt_ctx || conn->xprt != &ssl_sock)
 		return 0;
 
@@ -3849,7 +3849,7 @@ smp_fetch_ssl_fc_session_id(struct proxy *px, struct stream *l4, void *l7, unsig
 }
 
 static int
-smp_fetch_ssl_fc_sni(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
+smp_fetch_ssl_fc_sni(struct proxy *px, struct stream *strm, unsigned int opt,
                      const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
 #ifdef SSL_CTRL_SET_TLSEXT_HOSTNAME
@@ -3874,8 +3874,8 @@ smp_fetch_ssl_fc_sni(struct proxy *px, struct stream *l4, void *l7, unsigned int
 }
 
 static int
-smp_fetch_ssl_fc_unique_id(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
-                          const struct arg *args, struct sample *smp, const char *kw, void *private)
+smp_fetch_ssl_fc_unique_id(struct proxy *px, struct stream *strm, unsigned int opt,
+                           const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
 #if OPENSSL_VERSION_NUMBER > 0x0090800fL
 	int back_conn = (kw[4] == 'b') ? 1 : 0;
@@ -3885,7 +3885,7 @@ smp_fetch_ssl_fc_unique_id(struct proxy *px, struct stream *l4, void *l7, unsign
 
 	smp->flags = 0;
 
-	conn = objt_conn(l4->si[back_conn].end);
+	conn = objt_conn(strm->si[back_conn].end);
 	if (!conn || !conn->xprt_ctx || conn->xprt != &ssl_sock)
 		return 0;
 
@@ -3915,10 +3915,10 @@ smp_fetch_ssl_fc_unique_id(struct proxy *px, struct stream *l4, void *l7, unsign
 
 /* integer, returns the first verify error in CA chain of client certificate chain. */
 static int
-smp_fetch_ssl_c_ca_err(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
+smp_fetch_ssl_c_ca_err(struct proxy *px, struct stream *strm, unsigned int opt,
                        const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
-	struct session *sess = strm_sess(l4);
+	struct session *sess = strm_sess(strm);
 	struct connection *conn;
 
 	conn = objt_conn(sess->origin);
@@ -3939,10 +3939,10 @@ smp_fetch_ssl_c_ca_err(struct proxy *px, struct stream *l4, void *l7, unsigned i
 
 /* integer, returns the depth of the first verify error in CA chain of client certificate chain. */
 static int
-smp_fetch_ssl_c_ca_err_depth(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
+smp_fetch_ssl_c_ca_err_depth(struct proxy *px, struct stream *strm, unsigned int opt,
                              const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
-	struct session *sess = strm_sess(l4);
+	struct session *sess = strm_sess(strm);
 	struct connection *conn;
 
 	conn = objt_conn(sess->origin);
@@ -3963,10 +3963,10 @@ smp_fetch_ssl_c_ca_err_depth(struct proxy *px, struct stream *l4, void *l7, unsi
 
 /* integer, returns the first verify error on client certificate */
 static int
-smp_fetch_ssl_c_err(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
+smp_fetch_ssl_c_err(struct proxy *px, struct stream *strm, unsigned int opt,
                     const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
-	struct session *sess = strm_sess(l4);
+	struct session *sess = strm_sess(strm);
 	struct connection *conn;
 
 	conn = objt_conn(sess->origin);
@@ -3987,10 +3987,10 @@ smp_fetch_ssl_c_err(struct proxy *px, struct stream *l4, void *l7, unsigned int 
 
 /* integer, returns the verify result on client cert */
 static int
-smp_fetch_ssl_c_verify(struct proxy *px, struct stream *l4, void *l7, unsigned int opt,
+smp_fetch_ssl_c_verify(struct proxy *px, struct stream *strm, unsigned int opt,
                        const struct arg *args, struct sample *smp, const char *kw, void *private)
 {
-	struct session *sess = strm_sess(l4);
+	struct session *sess = strm_sess(strm);
 	struct connection *conn;
 
 	conn = objt_conn(sess->origin);
