@@ -2170,13 +2170,7 @@ __LJMP static int hlua_socket_new(lua_State *L)
 	socket->s->res_cap = NULL;
 
 	/* XXX: See later. */
-	socket->s->txn.sessid = NULL;
-	socket->s->txn.srv_cookie = NULL;
-	socket->s->txn.cli_cookie = NULL;
-	socket->s->txn.uri = NULL;
-	socket->s->txn.hdr_idx.v = NULL;
-	socket->s->txn.hdr_idx.size = 0;
-	socket->s->txn.hdr_idx.used = 0;
+	socket->s->txn = NULL;
 
 	/* Configure "left" stream interface as applet. This "si" produce
 	 * and use the data received from the server. The applet is initialized
@@ -2972,17 +2966,20 @@ __LJMP static int hlua_http_get_headers(lua_State *L, struct hlua_txn *htxn, str
 	/* Create the table. */
 	lua_newtable(L);
 
+	if (!htxn->s->txn)
+		return 1;
+
 	/* Build array of headers. */
 	old_idx = 0;
-	cur_next = msg->chn->buf->p + hdr_idx_first_pos(&htxn->s->txn.hdr_idx);
+	cur_next = msg->chn->buf->p + hdr_idx_first_pos(&htxn->s->txn->hdr_idx);
 
 	while (1) {
-		cur_idx = htxn->s->txn.hdr_idx.v[old_idx].next;
+		cur_idx = htxn->s->txn->hdr_idx.v[old_idx].next;
 		if (!cur_idx)
 			break;
 		old_idx = cur_idx;
 
-		cur_hdr  = &htxn->s->txn.hdr_idx.v[cur_idx];
+		cur_hdr  = &htxn->s->txn->hdr_idx.v[cur_idx];
 		cur_ptr  = cur_next;
 		cur_next = cur_ptr + cur_hdr->len + cur_hdr->cr + 1;
 
@@ -3022,7 +3019,7 @@ __LJMP static int hlua_http_req_get_headers(lua_State *L)
 	MAY_LJMP(check_args(L, 1, "req_get_headers"));
 	htxn = MAY_LJMP(hlua_checkhttp(L, 1));
 
-	return hlua_http_get_headers(L, htxn, &htxn->s->txn.req);
+	return hlua_http_get_headers(L, htxn, &htxn->s->txn->req);
 }
 
 __LJMP static int hlua_http_res_get_headers(lua_State *L)
@@ -3032,7 +3029,7 @@ __LJMP static int hlua_http_res_get_headers(lua_State *L)
 	MAY_LJMP(check_args(L, 1, "res_get_headers"));
 	htxn = MAY_LJMP(hlua_checkhttp(L, 1));
 
-	return hlua_http_get_headers(L, htxn, &htxn->s->txn.rsp);
+	return hlua_http_get_headers(L, htxn, &htxn->s->txn->rsp);
 }
 
 /* This function replace full header, or just a value in
@@ -3063,7 +3060,7 @@ __LJMP static int hlua_http_req_rep_hdr(lua_State *L)
 	MAY_LJMP(check_args(L, 4, "req_rep_hdr"));
 	htxn = MAY_LJMP(hlua_checkhttp(L, 1));
 
-	return MAY_LJMP(hlua_http_rep_hdr(L, htxn, &htxn->s->txn.req, HTTP_REQ_ACT_REPLACE_HDR));
+	return MAY_LJMP(hlua_http_rep_hdr(L, htxn, &htxn->s->txn->req, HTTP_REQ_ACT_REPLACE_HDR));
 }
 
 __LJMP static int hlua_http_res_rep_hdr(lua_State *L)
@@ -3073,7 +3070,7 @@ __LJMP static int hlua_http_res_rep_hdr(lua_State *L)
 	MAY_LJMP(check_args(L, 4, "res_rep_hdr"));
 	htxn = MAY_LJMP(hlua_checkhttp(L, 1));
 
-	return MAY_LJMP(hlua_http_rep_hdr(L, htxn, &htxn->s->txn.rsp, HTTP_RES_ACT_REPLACE_HDR));
+	return MAY_LJMP(hlua_http_rep_hdr(L, htxn, &htxn->s->txn->rsp, HTTP_RES_ACT_REPLACE_HDR));
 }
 
 __LJMP static int hlua_http_req_rep_val(lua_State *L)
@@ -3083,7 +3080,7 @@ __LJMP static int hlua_http_req_rep_val(lua_State *L)
 	MAY_LJMP(check_args(L, 4, "req_rep_hdr"));
 	htxn = MAY_LJMP(hlua_checkhttp(L, 1));
 
-	return MAY_LJMP(hlua_http_rep_hdr(L, htxn, &htxn->s->txn.req, HTTP_REQ_ACT_REPLACE_VAL));
+	return MAY_LJMP(hlua_http_rep_hdr(L, htxn, &htxn->s->txn->req, HTTP_REQ_ACT_REPLACE_VAL));
 }
 
 __LJMP static int hlua_http_res_rep_val(lua_State *L)
@@ -3093,7 +3090,7 @@ __LJMP static int hlua_http_res_rep_val(lua_State *L)
 	MAY_LJMP(check_args(L, 4, "res_rep_val"));
 	htxn = MAY_LJMP(hlua_checkhttp(L, 1));
 
-	return MAY_LJMP(hlua_http_rep_hdr(L, htxn, &htxn->s->txn.rsp, HTTP_RES_ACT_REPLACE_VAL));
+	return MAY_LJMP(hlua_http_rep_hdr(L, htxn, &htxn->s->txn->rsp, HTTP_RES_ACT_REPLACE_VAL));
 }
 
 /* This function deletes all the occurences of an header.
@@ -3104,7 +3101,7 @@ __LJMP static inline int hlua_http_del_hdr(lua_State *L, struct hlua_txn *htxn, 
 	size_t len;
 	const char *name = MAY_LJMP(luaL_checklstring(L, 2, &len));
 	struct hdr_ctx ctx;
-	struct http_txn *txn = &htxn->s->txn;
+	struct http_txn *txn = htxn->s->txn;
 
 	ctx.idx = 0;
 	while (http_find_header2(name, len, msg->chn->buf->p, &txn->hdr_idx, &ctx))
@@ -3119,7 +3116,7 @@ __LJMP static int hlua_http_req_del_hdr(lua_State *L)
 	MAY_LJMP(check_args(L, 2, "req_del_hdr"));
 	htxn = MAY_LJMP(hlua_checkhttp(L, 1));
 
-	return hlua_http_del_hdr(L, htxn, &htxn->s->txn.req);
+	return hlua_http_del_hdr(L, htxn, &htxn->s->txn->req);
 }
 
 __LJMP static int hlua_http_res_del_hdr(lua_State *L)
@@ -3129,7 +3126,7 @@ __LJMP static int hlua_http_res_del_hdr(lua_State *L)
 	MAY_LJMP(check_args(L, 2, "req_del_hdr"));
 	htxn = MAY_LJMP(hlua_checkhttp(L, 1));
 
-	return hlua_http_del_hdr(L, htxn, &htxn->s->txn.rsp);
+	return hlua_http_del_hdr(L, htxn, &htxn->s->txn->rsp);
 }
 
 /* This function adds an header. It is a wrapper used by
@@ -3158,7 +3155,7 @@ __LJMP static inline int hlua_http_add_hdr(lua_State *L, struct hlua_txn *htxn, 
 	p++;
 	memcpy(p, value, value_len);
 
-	lua_pushboolean(L, http_header_add_tail2(msg, &htxn->s->txn.hdr_idx,
+	lua_pushboolean(L, http_header_add_tail2(msg, &htxn->s->txn->hdr_idx,
 	                                         trash.str, trash.len) != 0);
 
 	return 0;
@@ -3171,7 +3168,7 @@ __LJMP static int hlua_http_req_add_hdr(lua_State *L)
 	MAY_LJMP(check_args(L, 3, "req_add_hdr"));
 	htxn = MAY_LJMP(hlua_checkhttp(L, 1));
 
-	return hlua_http_add_hdr(L, htxn, &htxn->s->txn.req);
+	return hlua_http_add_hdr(L, htxn, &htxn->s->txn->req);
 }
 
 __LJMP static int hlua_http_res_add_hdr(lua_State *L)
@@ -3181,7 +3178,7 @@ __LJMP static int hlua_http_res_add_hdr(lua_State *L)
 	MAY_LJMP(check_args(L, 3, "res_add_hdr"));
 	htxn = MAY_LJMP(hlua_checkhttp(L, 1));
 
-	return hlua_http_add_hdr(L, htxn, &htxn->s->txn.rsp);
+	return hlua_http_add_hdr(L, htxn, &htxn->s->txn->rsp);
 }
 
 static int hlua_http_req_set_hdr(lua_State *L)
@@ -3191,8 +3188,8 @@ static int hlua_http_req_set_hdr(lua_State *L)
 	MAY_LJMP(check_args(L, 3, "req_set_hdr"));
 	htxn = MAY_LJMP(hlua_checkhttp(L, 1));
 
-	hlua_http_del_hdr(L, htxn, &htxn->s->txn.req);
-	return hlua_http_add_hdr(L, htxn, &htxn->s->txn.req);
+	hlua_http_del_hdr(L, htxn, &htxn->s->txn->req);
+	return hlua_http_add_hdr(L, htxn, &htxn->s->txn->req);
 }
 
 static int hlua_http_res_set_hdr(lua_State *L)
@@ -3202,8 +3199,8 @@ static int hlua_http_res_set_hdr(lua_State *L)
 	MAY_LJMP(check_args(L, 3, "res_set_hdr"));
 	htxn = MAY_LJMP(hlua_checkhttp(L, 1));
 
-	hlua_http_del_hdr(L, htxn, &htxn->s->txn.rsp);
-	return hlua_http_add_hdr(L, htxn, &htxn->s->txn.rsp);
+	hlua_http_del_hdr(L, htxn, &htxn->s->txn->rsp);
+	return hlua_http_add_hdr(L, htxn, &htxn->s->txn->rsp);
 }
 
 /* This function set the method. */
@@ -3212,7 +3209,7 @@ static int hlua_http_req_set_meth(lua_State *L)
 	struct hlua_txn *s = MAY_LJMP(hlua_checkhttp(L, 1));
 	size_t name_len;
 	const char *name = MAY_LJMP(luaL_checklstring(L, 2, &name_len));
-	struct http_txn *txn = &s->s->txn;
+	struct http_txn *txn = s->s->txn;
 
 	lua_pushboolean(L, http_replace_req_line(0, name, name_len, s->p, s->s, txn) != -1);
 	return 1;
@@ -3224,7 +3221,7 @@ static int hlua_http_req_set_path(lua_State *L)
 	struct hlua_txn *s = MAY_LJMP(hlua_checkhttp(L, 1));
 	size_t name_len;
 	const char *name = MAY_LJMP(luaL_checklstring(L, 2, &name_len));
-	struct http_txn *txn = &s->s->txn;
+	struct http_txn *txn = s->s->txn;
 
 	lua_pushboolean(L, http_replace_req_line(1, name, name_len, s->p, s->s, txn) != -1);
 	return 1;
@@ -3236,7 +3233,7 @@ static int hlua_http_req_set_query(lua_State *L)
 	struct hlua_txn *s = MAY_LJMP(hlua_checkhttp(L, 1));
 	size_t name_len;
 	const char *name = MAY_LJMP(luaL_checklstring(L, 2, &name_len));
-	struct http_txn *txn = &s->s->txn;
+	struct http_txn *txn = s->s->txn;
 
 	/* Check length. */
 	if (name_len > trash.size - 1) {
@@ -3260,7 +3257,7 @@ static int hlua_http_req_set_uri(lua_State *L)
 	struct hlua_txn *s = MAY_LJMP(hlua_checkhttp(L, 1));
 	size_t name_len;
 	const char *name = MAY_LJMP(luaL_checklstring(L, 2, &name_len));
-	struct http_txn *txn = &s->s->txn;
+	struct http_txn *txn = s->s->txn;
 
 	lua_pushboolean(L, http_replace_req_line(3, name, name_len, s->p, s->s, txn) != -1);
 	return 1;
