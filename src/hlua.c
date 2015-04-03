@@ -2769,7 +2769,7 @@ __LJMP static int hlua_run_sample_fetch(lua_State *L)
 	memset(&smp, 0, sizeof(smp));
 
 	/* Run the sample fetch process. */
-	if (!f->process(s->p, s->s, 0, args, &smp, f->kw, f->private)) {
+	if (!f->process(s->p, s->s->sess, s->s, 0, args, &smp, f->kw, f->private)) {
 		if (s->stringsafe)
 			lua_pushstring(L, "");
 		else
@@ -3907,8 +3907,9 @@ static int hlua_sample_conv_wrapper(struct stream *stream, const struct arg *arg
  * doesn't allow "yield" functions because the HAProxy engine cannot
  * resume sample-fetches.
  */
-static int hlua_sample_fetch_wrapper(struct proxy *px, struct stream *s,
-                                     unsigned int opt, const struct arg *arg_p,
+static int hlua_sample_fetch_wrapper(struct proxy *px, struct session *sess,
+                                     struct stream *s, unsigned int opt,
+                                     const struct arg *arg_p,
                                      struct sample *smp, const char *kw, void *private)
 {
 	struct hlua_function *fcn = (struct hlua_function *)private;
