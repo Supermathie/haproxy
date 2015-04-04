@@ -1999,6 +1999,7 @@ __LJMP static int hlua_socket_new(lua_State *L)
 {
 	struct hlua_socket *socket;
 	struct appctx *appctx;
+	struct session *sess;
 
 	/* Check stack size. */
 	if (!lua_checkstack(L, 3)) {
@@ -2027,8 +2028,8 @@ __LJMP static int hlua_socket_new(lua_State *L)
 	 * Get memory for the request.
 	 *
 	 */
-	socket->s->sess = pool_alloc2(pool2_session);
-	if (!socket->s->sess) {
+	sess = pool_alloc2(pool2_session);
+	if (!sess) {
 		hlua_pusherror(L, "socket: out of memory");
 		goto out_fail_conf;
 	}
@@ -2039,6 +2040,7 @@ __LJMP static int hlua_socket_new(lua_State *L)
 		goto out_fail_stream;
 	}
 
+	socket->s->sess = sess;
 	socket->s->task = task_new();
 	if (!socket->s->task) {
 		hlua_pusherror(L, "socket: out of memory");
@@ -2233,7 +2235,7 @@ out_fail_req_buf:
 out_fail_task:
 	pool_free2(pool2_stream, socket->s);
 out_fail_stream:
-	pool_free2(pool2_session, socket->s->sess);
+	pool_free2(pool2_session, sess);
 out_fail_conf:
 	WILL_LJMP(lua_error(L));
 	return 0;
